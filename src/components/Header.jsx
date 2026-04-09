@@ -21,8 +21,10 @@ function Header() {
     { href: "/Postear", label: <CiCirclePlus /> },
   ]);
 
+  const [hidden, setHidden] = useState(false);
   const pathname = usePathname();
 
+  // 🔁 Reordenar nav según ruta actual
   useEffect(() => {
     const currentIndex = navLinks.findIndex((e) => e.href === pathname);
     const targetPosition = 2;
@@ -40,8 +42,37 @@ function Header() {
     setNavLinks(rotated);
   }, [pathname]);
 
+  // 📜 Detectar dirección del scroll
+  useEffect(() => {
+    let lastScroll = window.scrollY;
+    const threshold = 10;
+
+    const handleScroll = () => {
+      const currentScroll = window.scrollY;
+
+      if (currentScroll - lastScroll > threshold && currentScroll > 50) {
+        // Scroll hacia abajo
+        setHidden(true);
+      } else if (lastScroll - currentScroll > threshold) {
+        // Scroll hacia arriba
+        setHidden(false);
+      }
+
+      lastScroll = currentScroll;
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <header className="bg-secondary w-[150vw] h-48 fixed top-0 -translate-y-2/5 left-1/2 -translate-x-1/2 flex justify-center items-center rounded-[100%] border-acent border-8 overflow-hidden">
+    <motion.header
+      initial={{ y: -80 }}
+      animate={{ y: hidden ? -200 : -80 }} // ajusta -80 según tu diseño
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="bg-secondary w-[150vw] h-48 fixed top-0 left-1/2 -translate-x-1/2 flex justify-center items-center rounded-[100%] border-acent border-8 overflow-hidden z-50"
+    >
       <motion.nav
         layout
         transition={{ duration: 0.4, ease: "easeInOut" }}
@@ -58,7 +89,7 @@ function Header() {
           </motion.div>
         ))}
       </motion.nav>
-    </header>
+    </motion.header>
   );
 }
 
