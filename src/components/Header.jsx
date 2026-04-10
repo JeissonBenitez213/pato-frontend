@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useAnimation } from "framer-motion";
 import {
   CiUser,
   CiSettings,
@@ -12,7 +11,12 @@ import {
   CiCirclePlus,
 } from "react-icons/ci";
 
+const ITEM_PERCENT = 20;
+
 function Header() {
+  const router = useRouter();
+  const controls = useAnimation();
+
   const [navLinks, setNavLinks] = useState([
     { href: "/User", label: <CiUser /> },
     { href: "/Settings", label: <CiSettings /> },
@@ -22,17 +26,17 @@ function Header() {
   ]);
 
   const [hidden, setHidden] = useState(false);
-  const pathname = usePathname();
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  // 🔁 Reordenar nav según ruta actual
+  const pathname = usePathname();
+  const centerIndex = 2;
+
   useEffect(() => {
     const currentIndex = navLinks.findIndex((e) => e.href === pathname);
-    const targetPosition = 2;
-
     if (currentIndex === -1) return;
 
     const rotateBy =
-      (currentIndex - targetPosition + navLinks.length) % navLinks.length;
+      (currentIndex - centerIndex + navLinks.length) % navLinks.length;
 
     const rotated = [
       ...navLinks.slice(rotateBy),
@@ -40,9 +44,9 @@ function Header() {
     ];
 
     setNavLinks(rotated);
+    controls.set({ x: "0%" });
   }, [pathname]);
 
-  // 📜 Detectar dirección del scroll
   useEffect(() => {
     let lastScroll = window.scrollY;
     const threshold = 10;
@@ -51,10 +55,8 @@ function Header() {
       const currentScroll = window.scrollY;
 
       if (currentScroll - lastScroll > threshold && currentScroll > 50) {
-        // Scroll hacia abajo
         setHidden(true);
       } else if (lastScroll - currentScroll > threshold) {
-        // Scroll hacia arriba
         setHidden(false);
       }
 
@@ -62,32 +64,70 @@ function Header() {
     };
 
     window.addEventListener("scroll", handleScroll);
-
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleClick = async (index, href) => {
+    if (isAnimating) return;
+
+    const diff = index - centerIndex;
+    if (diff === 0) {
+      router.push(href);
+      return;
+    }
+
+    setIsAnimating(true);
+
+    const direction = diff > 0 ? -1 : 1;
+    const distance = Math.abs(diff) * ITEM_PERCENT * direction;
+
+    await controls.start({
+      x: `${distance}%`,
+      transition: { duration: 0.4, ease: "easeInOut" },
+    });
+
+    const rotateBy = (index - centerIndex + navLinks.length) % navLinks.length;
+
+    const rotated = [
+      ...navLinks.slice(rotateBy),
+      ...navLinks.slice(0, rotateBy),
+    ];
+
+    setNavLinks(rotated);
+
+    controls.set({ x: "0%" });
+
+    router.push(href);
+    setIsAnimating(false);
+  };
+
+  const extended = [...navLinks, ...navLinks, ...navLinks];
 
   return (
     <motion.header
       initial={{ y: -80 }}
-      animate={{ y: hidden ? -200 : -80 }} // ajusta -80 según tu diseño
+      animate={{ y: hidden ? -200 : -80 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className="bg-secondary w-[150vw] h-48 fixed top-0 left-1/2 -translate-x-1/2 flex justify-center items-center rounded-[100%] border-acent border-8 overflow-hidden z-50"
     >
       <motion.nav
-        layout
-        transition={{ duration: 0.4, ease: "easeInOut" }}
-        className="w-[101.6vw] h-full flex"
+        animate={controls}
+        className="w-[101.6vw] h-full flex justify-center"
       >
-        {navLinks.map((e) => (
-          <motion.div key={e.href} layout className="flex-[0_0_20%]">
-            <Link
-              href={e.href}
-              className="flex items-center justify-center h-[110%] text-5xl border-4 border-acent"
-            >
-              {e.label}
-            </Link>
-          </motion.div>
-        ))}
+        {extended.map((e, i) => {
+          const realIndex = i % navLinks.length;
+
+          return (
+            <div key={i} className="flex-[0_0_20%]">
+              <button
+                onClick={() => handleClick(realIndex, e.href)}
+                className="w-full h-[125%] flex items-center justify-center text-5xl border-4 border-acent"
+              >
+                {e.label}
+              </button>
+            </div>
+          );
+        })}
       </motion.nav>
     </motion.header>
   );
