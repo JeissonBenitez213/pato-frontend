@@ -1,7 +1,45 @@
 @import "tailwindcss";
 
-@theme {
+:root {
   --color-primary: #161117;
   --color-secondary: #420e1f;
-  --color-acent: #7a6df3;
+  --color-surface: #1f1720;
+  --color-text-base: #f4ecff;
+  --color-accent: #7a6df3;
+  color-scheme: dark;
+  color: var(--color-text-base);
+  background: var(--color-primary);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-primary);
+  color: var(--color-text-base);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+@layer utilities {
+  .bg-primary { background-color: var(--color-primary); }
+  .bg-secondary { background-color: var(--color-secondary); }
+  .bg-surface { background-color: var(--color-surface); }
+  .text-text-base { color: var(--color-text-base); }
+  .border-accent { border-color: var(--color-accent); }
+  .bg-accent { background-color: var(--color-accent); }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.16); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.12); }
+  70% { transform: scale(1); }
+}
+
+.heartbeat {
+  animation: heartbeat 0.35s ease-in-out;
 }

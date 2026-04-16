@@ -29,6 +29,28 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Custom Feed and Comments
+
+This project now includes a reusable post feed and comment system implemented in `src/components`:
+
+- `PostCard.jsx`: reusable publication card with:
+  - animated heart like button
+  - share and comment controls
+  - modal comments overlay above all posts
+  - nested replies with independent like buttons
+  - image and file attachment buttons in the comment composer
+  - enforced 220 character limits for comments and replies
+  - responsive mobile-first Tailwind styling
+
+- `PublishBar.jsx`: reusable publish bar for home and profile modes with:
+  - mobile-first layout
+  - image/file upload buttons
+  - remaining character counter
+
+- `mockPosts.js`: example posts used to render a test feed on `app/page.jsx`
+
+These changes were added inside `src` only.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
