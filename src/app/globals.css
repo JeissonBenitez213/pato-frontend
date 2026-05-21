@@ -1,45 +1,153 @@
-@import "tailwindcss";
+/* ============================================================
+   PATO — Sistema de diseño
+   Tema oscuro, acentos neon morado/magenta segun el wireframe.
+   ============================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap");
 
 :root {
-  --color-primary: #161117;
-  --color-secondary: #420e1f;
-  --color-surface: #1f1720;
-  --color-text-base: #f4ecff;
-  --color-accent: #7a6df3;
-  color-scheme: dark;
-  color: var(--color-text-base);
-  background: var(--color-primary);
+  /* superficies */
+  --bg: #0a070c;
+  --bg-2: #100a14;
+  --surface: #3a0d28;          /* maroon de las cards */
+  --surface-2: #2a0a20;
+  --surface-grad-a: #4a1030;
+  --surface-grad-b: #1f0818;
+
+  /* acentos neon */
+  --accent: #7c5cff;           /* morado brillante (bordes/curva) */
+  --accent-2: #b14cff;         /* magenta */
+  --accent-glow: rgba(124, 92, 255, 0.55);
+  --magenta-glow: rgba(177, 76, 255, 0.45);
+
+  /* texto */
+  --text: #f4eef9;
+  --text-dim: #b9a8c8;
+  --text-faint: #7c6a8c;
+
+  /* skeleton / placeholders */
+  --pill: #d9d4dd;
+  --pill-dim: #cfc8d6;
+
+  --radius: 22px;
+  --radius-sm: 14px;
+  --radius-pill: 999px;
+
+  --font-display: "Sora", system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 html,
 body {
-  min-height: 100%;
-}
-
-body {
+  padding: 0;
   margin: 0;
-  background: var(--color-primary);
-  color: var(--color-text-base);
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
 }
 
-@layer utilities {
-  .bg-primary { background-color: var(--color-primary); }
-  .bg-secondary { background-color: var(--color-secondary); }
-  .bg-surface { background-color: var(--color-surface); }
-  .text-text-base { color: var(--color-text-base); }
-  .border-accent { border-color: var(--color-accent); }
-  .bg-accent { background-color: var(--color-accent); }
+/* atmosfera de fondo: resplandores difusos */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(60vw 60vw at 12% -10%, rgba(124, 92, 255, 0.14), transparent 60%),
+    radial-gradient(50vw 50vw at 110% 20%, rgba(177, 76, 255, 0.12), transparent 60%),
+    radial-gradient(70vw 50vw at 50% 120%, rgba(124, 92, 255, 0.08), transparent 60%);
+  pointer-events: none;
 }
 
-@keyframes heartbeat {
-  0%, 100% { transform: scale(1); }
-  14% { transform: scale(1.16); }
-  28% { transform: scale(1); }
-  42% { transform: scale(1.12); }
-  70% { transform: scale(1); }
+/* textura de grano sutil */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.035;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-.heartbeat {
-  animation: heartbeat 0.35s ease-in-out;
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 92, 255, 0.35);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 92, 255, 0.55);
+}
+
+/* ---------- utilidades ---------- */
+.glow-border {
+  border: 2px solid var(--accent);
+  box-shadow:
+    0 0 0 1px rgba(124, 92, 255, 0.25),
+    0 0 18px var(--accent-glow),
+    inset 0 0 12px rgba(124, 92, 255, 0.08);
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 18px;
+}
+
+.skeleton-pill {
+  background: var(--pill);
+  border-radius: var(--radius-pill);
+  height: 18px;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fade-up {
+  animation: fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
