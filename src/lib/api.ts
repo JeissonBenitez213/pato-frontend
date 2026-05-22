@@ -1,4 +1,18 @@
 import { API_URL, GRAPHQL_URL } from "./env";
+import {
+  FEED_QUERY,
+  SEARCH_POSTS_QUERY,
+  FIND_ONE_USER_QUERY,
+  FIND_FRIENDS_QUERY,
+  GET_PET_QUERY,
+  GET_BADGES_QUERY,
+  CREATE_POST_MUTATION,
+  ADD_REACTION_MUTATION,
+  TOGGLE_FOLLOW_MUTATION,
+  CREATE_COMMENT_MUTATION,
+  POST_COMMENTS_QUERY,
+} from "./queries";
+import type { Badge, FullUser, Pet, Post, UserLite } from "./types";
 
 /**
  * Cliente de red para el backend NestJS.
@@ -57,7 +71,7 @@ async function rest<T = unknown>(
 /** Intenta refrescar el access_token usando la cookie refresh_token. */
 async function tryRefresh(): Promise<boolean> {
   try {
-    await rest("/auth/refresh", { method: "POST" });
+    await rest("/auth/refresh", { method: "POST", credentials: "include" });
     return true;
   } catch {
     return false;
@@ -97,7 +111,11 @@ export async function gql<T = unknown>(
       if (ok) return gql<T>(query, variables, false);
     }
 
-    throw new ApiError(json.errors.map((e) => e.message).join("; "), res.status, json.errors);
+    throw new ApiError(
+      json.errors.map((e) => e.message).join("; "),
+      res.status,
+      json.errors,
+    );
   }
 
   return json.data as T;
@@ -108,10 +126,110 @@ export const api = {
   gql,
   tryRefresh,
 
+  me: async () => {
+    const res = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_URL, {
+      method: "POST",
+
+      credentials: "include",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        query: `
+        query {
+          getMyData {
+            id_usuario
+            nombre_usuario
+          }
+        }
+      `,
+      }),
+    });
+
+    const data = (await res.json()) as {
+      authenticated: boolean;
+      id?: number;
+      nombre_usuario?: string;
+      is_admin?: boolean;
+    };
+
+    if (!res.ok) {
+      const message =
+        (data as { message?: string })?.message ||
+        `Error ${res.status} en /api/me`;
+      throw new ApiError(message, res.status, data);
+    }
+
+    return data;
+  },
+
+  refresh: () => rest<{ ok: boolean }>("/auth/refresh", { method: "POST" }),
+
+  registerAuth: (username: string, provider: string, provider_id: string) =>
+    rest("/auth/registerAuth", {
+      method: "POST",
+      body: JSON.stringify({ username, provider, provider_id }),
+    }),
+
+  oAuthLogin: (provider: string, provider_id: string) =>
+    rest<{ ok: boolean }>("/auth/oAuthLogin", {
+      method: "POST",
+      body: JSON.stringify({ provider, provider_id }),
+    }),
+
+  getFeed: () =>
+    gql<{ posts: { data: Post[]; nextCursor: number | null } }>(FEED_QUERY),
+
+  searchPosts: (filter: { search?: string; username?: string }) =>
+    gql<{ searchPosts: Post[] }>(SEARCH_POSTS_QUERY, { filter }),
+
+  findOneUser: (id_user: number) =>
+    gql<{ findOneUser: FullUser }>(FIND_ONE_USER_QUERY, { id_user }),
+
+  findFriends: () => gql<{ findFriends: UserLite[] }>(FIND_FRIENDS_QUERY),
+
+  getPet: () => gql<{ getPet: Pet }>(GET_PET_QUERY),
+
+  getBadges: () => gql<{ getBadges: Badge[] }>(GET_BADGES_QUERY),
+
+  createPost: (input: {
+    title: string;
+    description?: string;
+    files?: Array<{ dir: string; file_extension: string }>;
+  }) => gql(CREATE_POST_MUTATION, { input }),
+
+  addReaction: (input: {
+    id_post: number;
+    like?: boolean;
+    favorites?: boolean;
+    shares?: boolean;
+  }) => gql(ADD_REACTION_MUTATION, { input }),
+
+  toggleFollow: (id_user: number) =>
+    gql<{
+      toggleFollow: {
+        following: boolean;
+        user: { id_usuario: number; nombre_usuario: string };
+      };
+    }>(TOGGLE_FOLLOW_MUTATION, { id_user }),
+
+  createComment: (input: { id_post: number; texto: string }) =>
+    gql<{ createComment: { id_comentario: number } }>(CREATE_COMMENT_MUTATION, {
+      input,
+    }),
+
+  getComments: (postId: number) =>
+    gql<{ getComment: Array<{ id_comentario: number }> }>(POST_COMMENTS_QUERY, {
+      postId,
+    }),
+
   // ---- Auth (REST) ----
   login: (nombre_usuario: string, contrasena: string) =>
     rest<{ ok: boolean }>("/auth/login", {
       method: "POST",
+      credentials: "include",
       body: JSON.stringify({ nombre_usuario, contraseña: contrasena }),
     }),
 

@@ -8,8 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { api, gql } from "@/lib/api";
-import { FIND_FRIENDS_QUERY } from "@/lib/queries";
+import { api } from "@/lib/api";
 
 interface SessionUser {
   authenticated: boolean;
@@ -30,13 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  /**
-   * No hay endpoint /me, asi que probamos una query autenticada barata
-   * (findFriends) para saber si la cookie de sesion es valida.
-   */
   const check = useCallback(async () => {
     try {
-      await gql(FIND_FRIENDS_QUERY);
+      await api.me();
       setUser({ authenticated: true });
     } catch {
       setUser(null);

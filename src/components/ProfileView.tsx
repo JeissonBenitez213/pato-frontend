@@ -3,21 +3,36 @@
 import { useEffect, useMemo, useState } from "react";
 import PostCard from "./PostCard";
 import { gql, fileUrl } from "@/lib/api";
-import { FIND_ONE_USER_QUERY, TOGGLE_FOLLOW_MUTATION } from "@/lib/queries";
-import type { FullUser } from "@/lib/types";
+import {
+  FIND_ONE_USER_QUERY,
+  GET_PET_QUERY,
+  TOGGLE_FOLLOW_MUTATION,
+} from "@/lib/queries";
+import type { FullUser, Pet } from "@/lib/types";
 
 export default function ProfileView({ userId }: { userId: number }) {
   const [user, setUser] = useState<FullUser | null>(null);
+  const [pet, setPet] = useState<Pet | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [petError, setPetError] = useState<string | null>(null);
   const [following, setFollowing] = useState(false);
   const [dateFilter, setDateFilter] = useState("");
 
   useEffect(() => {
+    setUser(null);
+    setError(null);
+    setPet(null);
+    setPetError(null);
+
     gql<{ findOneUser: FullUser }>(FIND_ONE_USER_QUERY, {
       id_user: userId,
     })
       .then((d) => setUser(d.findOneUser))
       .catch((e) => setError(e.message));
+
+    gql<{ getPet: Pet }>(GET_PET_QUERY)
+      .then((d) => setPet(d.getPet))
+      .catch((e) => setPetError(e.message));
   }, [userId]);
 
   async function toggleFollow() {
@@ -32,199 +47,181 @@ export default function ProfileView({ userId }: { userId: number }) {
   const posts = useMemo(() => {
     const list = user?.posts ?? [];
     if (!dateFilter) return list;
-    return list.filter((p) =>
-      p.fecha_publicacion?.startsWith(dateFilter),
-    );
+    return list.filter((p) => p.fecha_publicacion?.startsWith(dateFilter));
   }, [user, dateFilter]);
 
   if (error)
-    return <p style={{ color: "#ff8aa5" }}>No se pudo cargar el perfil: {error}</p>;
-  if (!user) return <p style={{ color: "var(--text-dim)" }}>Cargando perfil…</p>;
+    return (
+      <p className="text-[#ff8aa5]">No se pudo cargar el perfil: {error}</p>
+    );
+  if (!user) return <p className="text-[var(--text-dim)]">Cargando perfil…</p>;
 
   const avatar = fileUrl(user.avatar) ?? user.avatar;
 
   return (
-    <div className="fade-up">
-      {/* tarjeta de perfil con banner */}
-      <div
-        style={{
-          position: "relative",
-          borderRadius: 22,
-          overflow: "hidden",
-          border: "2px solid var(--accent)",
-          boxShadow: "0 0 24px var(--accent-glow)",
-          marginBottom: 24,
-        }}
-      >
-        {/* banner */}
-        <div
-          style={{
-            height: 150,
-            background:
-              "linear-gradient(120deg, #5a1242, #2a0a20), radial-gradient(circle at 70% 30%, rgba(177,76,255,0.4), transparent)",
-          }}
-        />
-        <div style={{ padding: "0 22px 22px", background: "var(--surface)" }}>
-          {/* avatar con anillo de stories */}
-          <div
-            style={{
-              width: 110,
-              height: 110,
-              borderRadius: "50%",
-              padding: 4,
-              marginTop: -55,
-              background: "linear-gradient(135deg, var(--accent), var(--accent-2))",
-              boxShadow: "0 0 18px var(--accent-glow)",
-            }}
-          >
+    <section className="space-y-6 pt-[calc(12rem+1rem)] xl:pt-0">
+      <div className="grid gap-6 xl:grid-cols-[1.3fr_minmax(280px,340px)]">
+        <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-[var(--surface)] shadow-lg">
+          <header className="h-40 bg-linear-90 from-fuchsia-900 via-purple-900" />
+
+          <main className="px-6 pb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={avatar}
               alt={user.nombre_usuario}
-              style={{
-                width: "100%",
-                height: "100%",
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "3px solid var(--surface)",
-              }}
+              className="-mt-14 mb-4 h-28 w-28 rounded-full border-4 border-[var(--surface)] object-cover shadow-lg"
             />
-          </div>
 
-          {/* nombre + indicadores online / reputacion */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>
+            <h1 className="flex items-center gap-2 text-2xl font-bold text-white">
               {user.nombre_usuario}
-            </h1>
-            <span
-              title="En línea"
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                background: "#4cff9c",
-                boxShadow: "0 0 8px #4cff9c",
-              }}
-            />
-            {user.is_admin && (
-              <span
-                title="Insignia de reputación"
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: "50%",
-                  background: "#ffd34c",
-                  boxShadow: "0 0 8px #ffd34c",
-                }}
-              />
-            )}
-          </div>
 
-          {user.descripcion && (
-            <p style={{ color: "var(--text-dim)", marginTop: 8, lineHeight: 1.5 }}>
-              {user.descripcion}
-            </p>
-          )}
+              <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
 
-          {/* stats seguidores / siguiendo */}
-          <div style={{ display: "flex", gap: 22, marginTop: 12, color: "var(--text-dim)", fontSize: 14 }}>
-            <span><strong style={{ color: "var(--text)" }}>{user.seguidores?.length ?? 0}</strong> seguidores</span>
-            <span><strong style={{ color: "var(--text)" }}>{user.siguiendo?.length ?? 0}</strong> siguiendo</span>
-          </div>
-
-          {/* insignias / stack */}
-          {user.insignias && user.insignias.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-              {user.insignias.map((bu) => (
-                <span
-                  key={bu.id_insignia}
-                  style={{
-                    padding: "6px 14px",
-                    borderRadius: 999,
-                    background: "rgba(124,92,255,0.15)",
-                    border: "1px solid rgba(124,92,255,0.4)",
-                    fontSize: 12,
-                  }}
-                >
-                  {bu.insignia.icono ? `${bu.insignia.icono} ` : ""}
-                  {bu.insignia.nombre}
+              {user.is_admin && (
+                <span className="rounded-full border border-yellow-500/30 bg-yellow-500/15 px-2 py-0.5 text-xs text-yellow-300">
+                  Admin
                 </span>
-              ))}
-            </div>
-          )}
+              )}
+            </h1>
 
-          <button
-            onClick={toggleFollow}
-            style={{
-              marginTop: 18,
-              padding: "11px 30px",
-              borderRadius: 999,
-              border: "none",
-              fontWeight: 700,
-              color: "#fff",
-              background: following
-                ? "rgba(124,92,255,0.25)"
-                : "linear-gradient(90deg, var(--accent), var(--accent-2))",
-              boxShadow: following ? "none" : "0 0 18px var(--accent-glow)",
-            }}
-          >
-            {following ? "Siguiendo" : "Follow"}
-          </button>
-        </div>
+            {user.descripcion && (
+              <p className="mt-3 text-sm leading-relaxed text-[var(--text-dim)]">
+                {user.descripcion}
+              </p>
+            )}
+
+            <p className="mt-4 flex gap-6 text-sm text-[var(--text-dim)]">
+              <span>
+                <strong className="text-white">
+                  {user.seguidores?.length ?? 0}
+                </strong>{" "}
+                seguidores
+              </span>
+
+              <span>
+                <strong className="text-white">
+                  {user.siguiendo?.length ?? 0}
+                </strong>{" "}
+                siguiendo
+              </span>
+            </p>
+
+            {user.insignias?.length > 0 && (
+              <p className="mt-4 flex flex-wrap gap-2">
+                {user.insignias.map((bu) => (
+                  <span
+                    key={bu.id_insignia}
+                    className="rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1 text-xs text-purple-200"
+                  >
+                    {bu.insignia.icono ? `${bu.insignia.icono} ` : ""}
+                    {bu.insignia.nombre}
+                  </span>
+                ))}
+              </p>
+            )}
+
+            <button
+              onClick={toggleFollow}
+              className={`mt-5 rounded-xl px-5 py-2 font-medium transition ${
+                following
+                  ? "border border-zinc-700 bg-zinc-800 text-zinc-300"
+                  : "bg-purple-600 text-white hover:bg-purple-500"
+              }`}
+            >
+              {following ? "Siguiendo" : "Seguir"}
+            </button>
+          </main>
+        </article>
+
+        <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-[var(--surface)] shadow-lg">
+          <header className="px-6 py-5 border-b border-zinc-800 bg-zinc-950/40">
+            <h2 className="text-lg font-semibold text-white">Mascota</h2>
+            <p className="mt-1 text-sm text-[var(--text-dim)]">
+              Información de tu pet en el backend.
+            </p>
+          </header>
+
+          <main className="p-6 space-y-4">
+            {pet ? (
+              <div className="space-y-3 text-sm text-[var(--text-dim)]">
+                <div className="rounded-2xl bg-zinc-950/70 p-4">
+                  <p>
+                    <strong className="text-white">Nivel actual</strong>:{" "}
+                    {pet.nivel_actual}
+                  </p>
+                  <p>
+                    <strong className="text-white">XP</strong>:{" "}
+                    {pet.puntos_experiencia}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-zinc-950/70 p-4">
+                  <p>
+                    <strong className="text-white">ID mascota</strong>:{" "}
+                    {pet.id_mascota}
+                  </p>
+                  <p>
+                    <strong className="text-white">ID usuario</strong>:{" "}
+                    {pet.id_usuario}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-zinc-950/70 p-4">
+                  <p className="text-white">Última evolución</p>
+                  <p>
+                    {new Date(pet.fecha_ultima_evolucion).toLocaleDateString(
+                      "es-ES",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )}
+                  </p>
+                </div>
+              </div>
+            ) : petError ? (
+              <p className="text-sm text-[#ff8aa5]">
+                No se pudo cargar la mascota: {petError}
+              </p>
+            ) : (
+              <p className="text-sm text-[var(--text-dim)]">
+                Cargando mascota…
+              </p>
+            )}
+          </main>
+        </article>
       </div>
 
-      {/* filtro de fechas de proyectos */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 18,
-        }}
-      >
-        <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Proyectos</h2>
+      <header className="flex items-center gap-3">
+        <h2 className="text-xl font-bold text-white">Proyectos</h2>
+
         <input
           type="date"
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value)}
-          title="Filtrar por fecha (DD/MM/AAAA)"
-          style={{
-            marginLeft: "auto",
-            padding: "8px 14px",
-            borderRadius: 999,
-            background: "rgba(12,5,10,0.6)",
-            border: "1px solid rgba(124,92,255,0.4)",
-            color: "var(--text)",
-            colorScheme: "dark",
-          }}
+          className="ml-auto rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
         />
+
         {dateFilter && (
           <button
             onClick={() => setDateFilter("")}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "var(--accent-2)",
-              fontSize: 13,
-            }}
+            className="text-sm text-purple-300"
           >
             limpiar
           </button>
         )}
-      </div>
+      </header>
 
-      {posts.length === 0 && (
-        <p style={{ color: "var(--text-dim)" }}>
+      {posts.length === 0 ? (
+        <p className="rounded-2xl border border-zinc-800 bg-[var(--surface)] p-5 text-sm text-[var(--text-dim)]">
           {dateFilter ? "Sin proyectos en esa fecha." : "Aún no hay proyectos."}
         </p>
+      ) : (
+        posts.map((p) => (
+          <PostCard key={p.id_post} post={{ ...p, usuario: user }} />
+        ))
       )}
-
-      {posts.map((p) => (
-        <PostCard
-          key={p.id_post}
-          post={{ ...p, usuario: user }}
-        />
-      ))}
-    </div>
+    </section>
   );
 }

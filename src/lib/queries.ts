@@ -3,38 +3,34 @@
  * Solo se piden los campos que el front realmente usa.
  */
 
-export const FEED_QUERY = /* GraphQL */ `
+export const FEED_QUERY = `
   query Feed {
     posts {
-      data {
-        id_post
-        title
-        description
-        fecha_publicacion
+      id_post
+      title
+      description
+      fecha_publicacion
+      id_usuario
+
+      usuario {
         id_usuario
-
-        usuario {
-          id_usuario
-          nombre_usuario
-          avatar
-          descripcion
-        }
-
-        files {
-          id_file
-          dir
-          file_extension
-        }
-
-        stats {
-          likes
-          comentarios
-          shares
-          favorites
-        }
+        nombre_usuario
+        avatar
+        descripcion
       }
 
-      nextCursor
+      files {
+        id_file
+        dir
+        file_extension
+      }
+
+      stats {
+        likes
+        comentarios
+        shares
+        favorites
+      }
     }
   }
 `;

@@ -24,14 +24,7 @@ export default function AppShell({
 
   if (loading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "grid",
-          placeItems: "center",
-          color: "var(--text-dim)",
-        }}
-      >
+      <div className="min-h-screen flex items-start justify-center pt-12 text-[var(--text-dim)]">
         <div className="fade-up">Cargando…</div>
       </div>
     );
@@ -40,16 +33,9 @@ export default function AppShell({
   if (requireAuth && !user) return null;
 
   return (
-    <div className="app-shell" style={{ paddingLeft: 0 }}>
+    <div>
       <Navbar />
       <main className="container nav-offset">{children}</main>
-      <style jsx global>{`
-        @media (min-width: 1100px) {
-          .nav-offset {
-            margin-left: 160px;
-          }
-        }
-      `}</style>
     </div>
   );
 }

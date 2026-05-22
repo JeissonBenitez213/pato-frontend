@@ -4,19 +4,20 @@
    ============================================================ */
 
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap");
+@import "tailwindcss";
 
 :root {
   /* superficies */
   --bg: #0a070c;
   --bg-2: #100a14;
-  --surface: #3a0d28;          /* maroon de las cards */
+  --surface: #3a0d28; /* maroon de las cards */
   --surface-2: #2a0a20;
   --surface-grad-a: #4a1030;
   --surface-grad-b: #1f0818;
 
   /* acentos neon */
-  --accent: #7c5cff;           /* morado brillante (bordes/curva) */
-  --accent-2: #b14cff;         /* magenta */
+  --accent: #7c5cff; /* morado brillante (bordes/curva) */
+  --accent-2: #b14cff; /* magenta */
   --accent-glow: rgba(124, 92, 255, 0.55);
   --magenta-glow: rgba(177, 76, 255, 0.45);
 
@@ -37,6 +38,12 @@
   --font-mono: "Space Mono", ui-monospace, monospace;
 }
 
+@theme {
+  --color-primary: #161117;
+  --color-secondary: #420e1f;
+  --color-acent: #7a6df3;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -51,18 +58,41 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+body {
+  background:
+    radial-gradient(
+      60vw 60vw at 12% -10%,
+      rgba(124, 92, 255, 0.14),
+      transparent 60%
+    ),
+    radial-gradient(
+      50vw 50vw at 110% 20%,
+      rgba(177, 76, 255, 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      70vw 50vw at 50% 120%,
+      rgba(124, 92, 255, 0.08),
+      transparent 60%
+    );
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  justify-content: center;
+  align-items: center;
+}
+
 /* atmosfera de fondo: resplandores difusos */
-body::before {
+/* body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -2;
-  background:
-    radial-gradient(60vw 60vw at 12% -10%, rgba(124, 92, 255, 0.14), transparent 60%),
-    radial-gradient(50vw 50vw at 110% 20%, rgba(177, 76, 255, 0.12), transparent 60%),
-    radial-gradient(70vw 50vw at 50% 120%, rgba(124, 92, 255, 0.08), transparent 60%);
+
   pointer-events: none;
-}
+} */
 
 /* textura de grano sutil */
 body::after {
