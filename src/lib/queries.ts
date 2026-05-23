@@ -37,6 +37,7 @@ export const FEED_QUERY = `
           id_comentario
           texto
           fecha
+          id_comentario_padre
 
           usuario {
             id_usuario
@@ -64,6 +65,7 @@ query GetCommentReplies($commentId: Float!) {
     id_comentario
     texto
     fecha
+    id_comentario_padre
     usuario {
       id_usuario
       nombre_usuario
@@ -179,15 +181,15 @@ export const CREATE_POST_MUTATION = /* GraphQL */ `
   }
 `;
 
-export const ADD_REACTION_MUTATION = /* GraphQL */ `
+export const ADD_REACTION_MUTATION = gql`
   mutation AddReaction($input: AddReaction!) {
     addReaction(input: $input) {
       id_postReaction
       id_post
-      Like
-      Favorites
-      Share
-      Comentario
+      like
+      favorites
+      share
+      comentario
     }
   }
 `;
@@ -210,6 +212,7 @@ export const CREATE_COMMENT_MUTATION = gql`
       id_comentario
       texto
       fecha
+      id_comentario_padre
       usuario {
         id_usuario
         nombre_usuario
@@ -225,6 +228,7 @@ export const POST_COMMENTS_QUERY = gql`
       id_comentario
       texto
       Fecha
+      id_comentario_padre
 
       Usuario {
         id_usuario
@@ -248,6 +252,54 @@ export const NEW_COMMENT_SUBSCRIPTION = gql`
         nombre_usuario
         avatar
       }
+    }
+  }
+`;
+
+export const UPDATE_COMMENT_MUTATION = gql`
+  mutation UpdateComment($input: UpdateCommentInput!) {
+    updateComment(input: $input) {
+      id_comentario
+      texto
+      id_comentario_padre
+
+      usuario {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+    }
+  }
+`;
+
+export const DELETE_COMMENT_MUTATION = gql`
+  mutation DeleteComment($comment_id: Float!) {
+    deleteComment(comment_id: $comment_id) {
+      id_comentario
+    }
+  }
+`;
+
+export const UPDATED_COMMENT_SUBSCRIPTION = gql`
+  subscription {
+    updatedComment {
+      id_comentario
+      texto
+      id_comentario_padre
+
+      usuario {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+    }
+  }
+`;
+
+export const DELETED_COMMENT_SUBSCRIPTION = gql`
+  subscription {
+    deletedComment {
+      id_comentario
     }
   }
 `;

@@ -1,4 +1,8 @@
+// src/lib/api.ts
+
+import { DocumentNode, print } from "graphql";
 import { API_URL, GRAPHQL_URL } from "./env";
+
 import {
   FEED_QUERY,
   SEARCH_POSTS_QUERY,
@@ -12,36 +16,35 @@ import {
   CREATE_COMMENT_MUTATION,
   POST_COMMENTS_QUERY,
 } from "./queries";
-import type { Badge, FullUser, Pet, Post, UserLite } from "./types";
 
-/**
- * Cliente de red para el backend NestJS.
- *
- * El backend entrega el access_token y refresh_token como cookies
- * httpOnly. Por eso TODAS las peticiones usan `credentials: "include"`,
- * de modo que el navegador adjunta las cookies automaticamente y no
- * tenemos que manejar el JWT manualmente en el cliente.
- */
+import type { Badge, FullUser, Pet, Post, UserLite } from "./types";
 
 export class ApiError extends Error {
   status: number;
   body: unknown;
+
   constructor(message: string, status: number, body?: unknown) {
     super(message);
+
     this.name = "ApiError";
     this.status = status;
     this.body = body;
   }
 }
 
-/** Peticion REST generica contra el backend. */
+/* ------------------------------------------------ */
+/* REST */
+/* ------------------------------------------------ */
+
 async function rest<T = unknown>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
+
     credentials: "include",
+
     headers: {
       "Content-Type": "application/json",
       ...(options.headers ?? {}),
@@ -49,7 +52,9 @@ async function rest<T = unknown>(
   });
 
   let data: unknown = null;
+
   const text = await res.text();
+
   if (text) {
     try {
       data = JSON.parse(text);
@@ -62,53 +67,75 @@ async function rest<T = unknown>(
     const message =
       (data as { message?: string })?.message ||
       `Error ${res.status} en ${path}`;
+
     throw new ApiError(message, res.status, data);
   }
 
   return data as T;
 }
 
-/** Intenta refrescar el access_token usando la cookie refresh_token. */
+/* ------------------------------------------------ */
+/* REFRESH */
+/* ------------------------------------------------ */
+
 export async function tryRefresh(): Promise<boolean> {
   try {
-    await rest("/auth/refresh", { method: "POST", credentials: "include" });
+    await rest("/auth/refresh", {
+      method: "POST",
+    });
+
     return true;
   } catch {
     return false;
   }
 }
 
-/**
- * Ejecuta una operacion GraphQL contra /graphql.
- * Si recibe UNAUTHENTICATED intenta refrescar y reintenta una vez.
- */
+/* ------------------------------------------------ */
+/* GRAPHQL */
+/* ------------------------------------------------ */
+
 export async function gql<T = unknown>(
-  query: string,
+  query: string | DocumentNode,
   variables: Record<string, unknown> = {},
   retry = true,
 ): Promise<T> {
+  const finalQuery = typeof query === "string" ? query : print(query);
+
   const res = await fetch(GRAPHQL_URL, {
     method: "POST",
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, variables }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: finalQuery,
+      variables,
+    }),
   });
 
   const json = (await res.json()) as {
     data?: T;
-    errors?: Array<{ message: string; extensions?: { code?: string } }>;
+    errors?: Array<{
+      message: string;
+      extensions?: {
+        code?: string;
+      };
+    }>;
   };
 
-  if (json.errors && json.errors.length) {
-    const unauth = json.errors.some(
+  if (json.errors?.length) {
+    const unauthenticated = json.errors.some(
       (e) =>
         e.extensions?.code === "UNAUTHENTICATED" ||
         /unauthorized|unauthenticated/i.test(e.message),
     );
 
-    if (unauth && retry) {
-      const ok = await tryRefresh();
-      if (ok) return gql<T>(query, variables, false);
+    if (unauthenticated && retry) {
+      const refreshed = await tryRefresh();
+
+      if (refreshed) {
+        return gql<T>(query, variables, false);
+      }
     }
 
     throw new ApiError(
@@ -121,66 +148,101 @@ export async function gql<T = unknown>(
   return json.data as T;
 }
 
+/* ------------------------------------------------ */
+/* API */
+/* ------------------------------------------------ */
+
 export const api = {
   rest,
   gql,
   tryRefresh,
 
+  /* ---------------- AUTH ---------------- */
+
   me: async () => {
-    const res = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_URL, {
-      method: "POST",
-
+    const res = await fetch(`${API_URL}/auth/me`, {
       credentials: "include",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        query: `
-        query {
-          getMyData {
-            id_usuario
-            nombre_usuario
-          }
-        }
-      `,
-      }),
     });
 
-    const data = (await res.json()) as {
-      authenticated: boolean;
-      id?: number;
-      nombre_usuario?: string;
-      is_admin?: boolean;
-    };
+    const data = await res.json();
 
     if (!res.ok) {
-      const message =
-        (data as { message?: string })?.message ||
-        `Error ${res.status} en /api/me`;
-      throw new ApiError(message, res.status, data);
+      throw new ApiError(data?.message || "No autenticado", res.status, data);
     }
 
-    return data;
+    return data as {
+      authenticated: boolean;
+      id: number;
+      nombre_usuario: string;
+      is_admin: boolean;
+    };
   },
 
-  refresh: () => rest<{ ok: boolean }>("/auth/refresh", { method: "POST" }),
+  refresh: () =>
+    rest<{ ok: boolean }>("/auth/refresh", {
+      method: "POST",
+    }),
+
+  login: (nombre_usuario: string, contrasena: string) =>
+    rest<{ ok: boolean }>("/auth/login", {
+      method: "POST",
+
+      body: JSON.stringify({
+        nombre_usuario,
+        contraseña: contrasena,
+      }),
+    }),
+
+  logout: () =>
+    rest<{ ok: boolean }>("/auth/logout", {
+      method: "POST",
+    }),
+
+  register: (
+    nombre_usuario: string,
+    contrasena: string,
+    contrasena_repetida: string,
+  ) =>
+    rest("/auth/register", {
+      method: "POST",
+
+      body: JSON.stringify({
+        nombre_usuario,
+        contraseña: contrasena,
+        contraseña_repetida: contrasena_repetida,
+      }),
+    }),
 
   registerAuth: (username: string, provider: string, provider_id: string) =>
     rest("/auth/registerAuth", {
       method: "POST",
-      body: JSON.stringify({ username, provider, provider_id }),
+
+      body: JSON.stringify({
+        username,
+        provider,
+        provider_id,
+      }),
     }),
 
   oAuthLogin: (provider: string, provider_id: string) =>
     rest<{ ok: boolean }>("/auth/oAuthLogin", {
       method: "POST",
-      body: JSON.stringify({ provider, provider_id }),
+
+      body: JSON.stringify({
+        provider,
+        provider_id,
+      }),
     }),
 
+  /* ---------------- POSTS ---------------- */
+
   getFeed: () =>
-    gql<{ posts: { data: Post[]; nextCursor: number | null } }>(FEED_QUERY),
+    gql<{
+      posts: {
+        data: Post[];
+        nextCursor: number | null;
+      };
+    }>(FEED_QUERY),
 
   searchPosts: (filter: { search?: string; username?: string }) =>
     gql<{ searchPosts: Post[] }>(SEARCH_POSTS_QUERY, { filter }),
@@ -197,68 +259,76 @@ export const api = {
   createPost: (input: {
     title: string;
     description?: string;
-    files?: Array<{ dir: string; file_extension: string }>;
-  }) => gql(CREATE_POST_MUTATION, { input }),
+    files?: Array<{
+      dir: string;
+      file_extension: string;
+    }>;
+  }) =>
+    gql(CREATE_POST_MUTATION, {
+      input,
+    }),
 
   addReaction: (input: {
     id_post: number;
     like?: boolean;
     favorites?: boolean;
     shares?: boolean;
-  }) => gql(ADD_REACTION_MUTATION, { input }),
+  }) =>
+    gql(ADD_REACTION_MUTATION, {
+      input,
+    }),
 
   toggleFollow: (id_user: number) =>
     gql<{
       toggleFollow: {
         following: boolean;
-        user: { id_usuario: number; nombre_usuario: string };
-      };
-    }>(TOGGLE_FOLLOW_MUTATION, { id_user }),
 
-  createComment: (input: { id_post: number; texto: string }) =>
-    gql<{ createComment: { id_comentario: number } }>(CREATE_COMMENT_MUTATION, {
+        user: {
+          id_usuario: number;
+          nombre_usuario: string;
+        };
+      };
+    }>(TOGGLE_FOLLOW_MUTATION, {
+      id_user,
+    }),
+
+  /* ---------------- COMMENTS ---------------- */
+
+  createComment: (input: {
+    id_post: number;
+    texto: string;
+    id_comentario_padre?: number | null;
+  }) =>
+    gql(CREATE_COMMENT_MUTATION, {
       input,
     }),
 
   getComments: (postId: number) =>
-    gql<{ getComment: Array<{ id_comentario: number }> }>(POST_COMMENTS_QUERY, {
+    gql(POST_COMMENTS_QUERY, {
       postId,
     }),
 
-  // ---- Auth (REST) ----
-  login: (nombre_usuario: string, contrasena: string) =>
-    rest<{ ok: boolean }>("/auth/login", {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({ nombre_usuario, contraseña: contrasena }),
-    }),
+  /* ---------------- FILES ---------------- */
 
-  register: (
-    nombre_usuario: string,
-    contrasena: string,
-    contrasena_repetida: string,
-  ) =>
-    rest("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({
-        nombre_usuario,
-        contraseña: contrasena,
-        contraseña_repetida: contrasena_repetida,
-      }),
-    }),
-
-  logout: () => rest<{ ok: boolean }>("/auth/logout", { method: "POST" }),
-
-  // ---- Subida de archivos (REST multipart) ----
   async uploadFiles(files: File[]) {
     const form = new FormData();
-    files.forEach((f) => form.append("files", f));
+
+    files.forEach((f) => {
+      form.append("files", f);
+    });
+
     const res = await fetch(`${API_URL}/files/upload`, {
       method: "POST",
+
       credentials: "include",
+
       body: form,
     });
-    if (!res.ok) throw new ApiError("Error subiendo archivos", res.status);
+
+    if (!res.ok) {
+      throw new ApiError("Error subiendo archivos", res.status);
+    }
+
     return (await res.json()) as Array<{
       path: string;
       extension: string;
@@ -267,9 +337,12 @@ export const api = {
   },
 };
 
-/** Construye la URL absoluta de un archivo servido por el backend. */
 export function fileUrl(dir?: string | null): string | null {
   if (!dir) return null;
-  if (dir.startsWith("http")) return dir;
+
+  if (dir.startsWith("http")) {
+    return dir;
+  }
+
   return `${API_URL}/${dir.replace(/^\/+/, "")}`;
 }
