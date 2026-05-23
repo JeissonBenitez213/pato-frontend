@@ -24,7 +24,7 @@ export default function AppShell({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-start justify-center pt-12 text-[var(--text-dim)]">
+      <div className="min-h-screen flex items-center justify-center pt-12 text-[var(--text-dim)]">
         <div className="fade-up">Cargando…</div>
       </div>
     );
@@ -35,7 +35,9 @@ export default function AppShell({
   return (
     <div>
       <Navbar />
-      <main className="container nav-offset">{children}</main>
+      <main className="flex justify-center items-center flex-col pt-52">
+        {children}
+      </main>
     </div>
   );
 }

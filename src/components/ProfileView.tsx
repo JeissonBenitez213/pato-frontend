@@ -59,7 +59,7 @@ export default function ProfileView({ userId }: { userId: number }) {
   const avatar = fileUrl(user.avatar) ?? user.avatar;
 
   return (
-    <section className="space-y-6 pt-[calc(12rem+1rem)] xl:pt-0">
+    <section className="space-y-6 pt-[calc(12rem+1rem)]">
       <div className="grid gap-6 xl:grid-cols-[1.3fr_minmax(280px,340px)]">
         <article className="overflow-hidden rounded-3xl border border-zinc-800 bg-[var(--surface)] shadow-lg">
           <header className="h-40 bg-linear-90 from-fuchsia-900 via-purple-900" />

@@ -69,7 +69,7 @@ async function rest<T = unknown>(
 }
 
 /** Intenta refrescar el access_token usando la cookie refresh_token. */
-async function tryRefresh(): Promise<boolean> {
+export async function tryRefresh(): Promise<boolean> {
   try {
     await rest("/auth/refresh", { method: "POST", credentials: "include" });
     return true;

@@ -1,38 +1,76 @@
-/**
- * Operaciones GraphQL que coinciden con el schema del backend (src/schema.gql).
- * Solo se piden los campos que el front realmente usa.
- */
+import { gql } from "@apollo/client";
 
 export const FEED_QUERY = `
   query Feed {
     posts {
-      id_post
-      title
-      description
-      fecha_publicacion
-      id_usuario
-
-      usuario {
+      data {
+        id_post
+        title
+        description
+        fecha_publicacion
         id_usuario
-        nombre_usuario
-        avatar
-        descripcion
+        score
+
+        usuario {
+          id_usuario
+          nombre_usuario
+          avatar
+          descripcion
+        }
+
+        files {
+          id_file
+          dir
+          file_extension
+        }
+
+        reactions {
+          id_postReaction
+          id_usuario
+          like
+          favorites
+          share
+          comentario
+        }
+
+        comentarios {
+          id_comentario
+          texto
+          fecha
+
+          usuario {
+            id_usuario
+            nombre_usuario
+            avatar
+          }
+        }
+
+        stats {
+          likes
+          comentarios
+          shares
+          favorites
+        }
       }
 
-      files {
-        id_file
-        dir
-        file_extension
-      }
-
-      stats {
-        likes
-        comentarios
-        shares
-        favorites
-      }
+      nextCursor
     }
   }
+`;
+
+export const REPLIES_QUERY = /* GraphQl */ `
+query GetCommentReplies($commentId: Float!) {
+  getCommentReplies {
+    id_comentario
+    texto
+    fecha
+    usuario {
+      id_usuario
+      nombre_usuario
+      avatar
+    }
+  }
+}
 `;
 
 export const SEARCH_POSTS_QUERY = /* GraphQL */ `
@@ -166,12 +204,28 @@ export const TOGGLE_FOLLOW_MUTATION = /* GraphQL */ `
   }
 `;
 
-export const CREATE_COMMENT_MUTATION = /* GraphQL */ `
+export const CREATE_COMMENT_MUTATION = gql`
   mutation CreateComment($input: CreateCommentInput!) {
     createComment(input: $input) {
       id_comentario
       texto
+      fecha
+      usuario {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+    }
+  }
+`;
+
+export const POST_COMMENTS_QUERY = gql`
+  query PostComments($postId: Float!) {
+    getComment(postId: $postId) {
+      id_comentario
+      texto
       Fecha
+
       Usuario {
         id_usuario
         nombre_usuario
@@ -181,14 +235,15 @@ export const CREATE_COMMENT_MUTATION = /* GraphQL */ `
   }
 `;
 
-export const POST_COMMENTS_QUERY = /* GraphQL */ `
-  query PostComments($postId: Float!) {
-    getComment(postId: $postId) {
+export const NEW_COMMENT_SUBSCRIPTION = gql`
+  subscription NewComment {
+    newComment {
       id_comentario
+      id_post
       texto
-      Fecha
-
-      Usuario {
+      fecha
+      id_comentario_padre
+      usuario {
         id_usuario
         nombre_usuario
         avatar

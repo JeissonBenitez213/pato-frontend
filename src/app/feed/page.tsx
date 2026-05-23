@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import AppShell from "@/components/AppShell";
-import DatosDemo from "@/components/DatosDemo";
 import PostCard from "@/components/PostCard";
+
 import { gql } from "@/lib/api";
 import { FEED_QUERY } from "@/lib/queries";
+
 import type { Post } from "@/lib/types";
 
 export default function FeedPage() {
@@ -25,19 +27,6 @@ export default function FeedPage() {
 
   return (
     <AppShell>
-      <h1
-        style={{
-          fontSize: 26,
-          fontWeight: 800,
-          margin: "6px 0 22px",
-          letterSpacing: "-0.02em",
-        }}
-      >
-        Inicio
-      </h1>
-
-      <DatosDemo />
-
       {error && (
         <p style={{ color: "#ff8aa5" }}>No se pudo cargar el feed: {error}</p>
       )}

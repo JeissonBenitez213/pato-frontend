@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthContext";
+import ApolloWrapper from "@/components/ApolloWrapper";
 
 export const metadata: Metadata = {
   title: "Pato",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <ApolloWrapper>
+          <AuthProvider>{children}</AuthProvider>
+        </ApolloWrapper>
       </body>
     </html>
   );

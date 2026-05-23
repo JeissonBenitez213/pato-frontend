@@ -29,6 +29,7 @@ export interface Post {
   usuario: UserLite;
   files?: PostFile[] | null;
   stats?: PostStats;
+  comentarios?: any;
 }
 
 export interface Badge {

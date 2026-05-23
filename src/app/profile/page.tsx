@@ -20,7 +20,7 @@ export default function MyProfilePage() {
         }
       }
     `)
-      .then((data) => {
+      .then((data: any) => {
         setId(data.getMyData.id_usuario);
       })
       .catch((err) => {
