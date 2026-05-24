@@ -303,3 +303,53 @@ export const DELETED_COMMENT_SUBSCRIPTION = gql`
     }
   }
 `;
+
+export const ADD_COMMENT_REACTION_MUTATION = gql`
+  mutation AddReactions($input: AddReactions!) {
+    addReactions(input: $input) {
+      id_reaction
+      id_comment
+      id_usuario
+      like
+      share
+      commented
+    }
+  }
+`;
+
+export const COMMENT_REACTION_SUBSCRIPTION = gql`
+  subscription CommentReactionUpdated($commentId: Float!) {
+    commentReactionUpdated(commentId: $commentId) {
+      id_reaction
+      id_comment
+      id_usuario
+      like
+      share
+      commented
+    }
+  }
+`;
+
+export const UPDATE_USER_MUTATION = `
+  mutation UpdateUser($input: UpdateUser!) {
+    updateUser(input: $input) {
+      id_usuario
+      nombre_usuario
+      email
+      descripcion
+      avatar
+    }
+  }
+`;
+
+export const UPDATED_USER_SUBSCRIPTION = gql`
+  subscription {
+    updatedUser {
+      id_usuario
+      nombre_usuario
+      email
+      descripcion
+      avatar
+    }
+  }
+`;

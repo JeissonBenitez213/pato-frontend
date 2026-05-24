@@ -154,15 +154,12 @@ const responseErrorLink = new ApolloLink((operation, forward) => {
 /* ---------------- WS ---------------- */
 
 const wsLink =
-  typeof window !== "undefined"
+  typeof window !== "undefined" && GRAPHQL_WS_URL
     ? new GraphQLWsLink(
         createClient({
           url: GRAPHQL_WS_URL,
-
           lazy: true,
-
-          retryAttempts: Infinity,
-
+          retryAttempts: 0,
           connectionParams: async () => {
             try {
               await refreshSession();
