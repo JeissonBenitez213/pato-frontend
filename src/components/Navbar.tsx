@@ -19,10 +19,10 @@ function Header() {
 
   const [navLinks, setNavLinks] = useState([
     { href: "/profile", label: <CiUser /> },
-    { href: "/Settings", label: <CiSettings /> },
+    { href: "/settings", label: <CiSettings /> },
     { href: "/", label: <CiHome /> },
-    { href: "/Search", label: <CiSearch /> },
-    { href: "/Postear", label: <CiCirclePlus /> },
+    { href: "/search", label: <CiSearch /> },
+    { href: "/post", label: <CiCirclePlus /> },
   ]);
 
   const [hidden, setHidden] = useState(false);
