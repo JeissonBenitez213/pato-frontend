@@ -1,6 +1,10 @@
 import { gql } from "@apollo/client";
 
-export const FEED_QUERY = `
+/* ================================================= */
+/* POSTS
+/* ================================================= */
+
+export const FEED_QUERY = gql`
   query Feed {
     posts {
       data {
@@ -59,34 +63,41 @@ export const FEED_QUERY = `
   }
 `;
 
-export const REPLIES_QUERY = /* GraphQl */ `
-query GetCommentReplies($commentId: Float!) {
-  getCommentReplies {
-    id_comentario
-    texto
-    fecha
-    id_comentario_padre
-    usuario {
-      id_usuario
-      nombre_usuario
-      avatar
+/* ================================================= */
+/* COMMENTS
+/* ================================================= */
+
+export const REPLIES_QUERY = gql`
+  query GetCommentReplies($commentId: Float!) {
+    getCommentReplies {
+      id_comentario
+      texto
+      fecha
+      id_comentario_padre
+
+      usuario {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
     }
   }
-}
 `;
 
-export const SEARCH_POSTS_QUERY = /* GraphQL */ `
+export const SEARCH_POSTS_QUERY = gql`
   query SearchPosts($filter: SearchPostInput!) {
     searchPosts(filter: $filter) {
       id_post
       title
       description
       fecha_publicacion
+
       usuario {
         id_usuario
         nombre_usuario
         avatar
       }
+
       files {
         id_file
         dir
@@ -96,7 +107,28 @@ export const SEARCH_POSTS_QUERY = /* GraphQL */ `
   }
 `;
 
-export const FIND_ONE_USER_QUERY = /* GraphQL */ `
+export const POST_COMMENTS_QUERY = gql`
+  query PostComments($postId: Float!) {
+    getComment(postId: $postId) {
+      id_comentario
+      texto
+      fecha
+      id_comentario_padre
+
+      usuario {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+    }
+  }
+`;
+
+/* ================================================= */
+/* USER
+/* ================================================= */
+
+export const FIND_ONE_USER_QUERY = gql`
   query FindOneUser($id_user: Float!) {
     findOneUser(id_user: $id_user) {
       id_usuario
@@ -106,6 +138,7 @@ export const FIND_ONE_USER_QUERY = /* GraphQL */ `
       avatar
       fecha_registro
       is_admin
+
       insignias {
         id_insignia
         insignia {
@@ -115,17 +148,21 @@ export const FIND_ONE_USER_QUERY = /* GraphQL */ `
           icono
         }
       }
+
       seguidores {
         follower_id
       }
+
       siguiendo {
         following_id
       }
+
       posts {
         id_post
         title
         description
         fecha_publicacion
+
         files {
           id_file
           dir
@@ -136,7 +173,7 @@ export const FIND_ONE_USER_QUERY = /* GraphQL */ `
   }
 `;
 
-export const FIND_FRIENDS_QUERY = /* GraphQL */ `
+export const FIND_FRIENDS_QUERY = gql`
   query FindFriends {
     findFriends {
       id_usuario
@@ -147,7 +184,11 @@ export const FIND_FRIENDS_QUERY = /* GraphQL */ `
   }
 `;
 
-export const GET_PET_QUERY = /* GraphQL */ `
+/* ================================================= */
+/* PET / BADGES
+/* ================================================= */
+
+export const GET_PET_QUERY = gql`
   query GetPet {
     getPet {
       id_mascota
@@ -159,7 +200,7 @@ export const GET_PET_QUERY = /* GraphQL */ `
   }
 `;
 
-export const GET_BADGES_QUERY = /* GraphQL */ `
+export const GET_BADGES_QUERY = gql`
   query GetBadges {
     getBadges {
       id_insignia
@@ -170,7 +211,11 @@ export const GET_BADGES_QUERY = /* GraphQL */ `
   }
 `;
 
-export const CREATE_POST_MUTATION = /* GraphQL */ `
+/* ================================================= */
+/* POSTS MUTATIONS
+/* ================================================= */
+
+export const CREATE_POST_MUTATION = gql`
   mutation CreatePost($input: CreatePostInput!) {
     createPost(input: $input) {
       id_post
@@ -194,7 +239,11 @@ export const ADD_REACTION_MUTATION = gql`
   }
 `;
 
-export const TOGGLE_FOLLOW_MUTATION = /* GraphQL */ `
+/* ================================================= */
+/* FOLLOW
+/* ================================================= */
+
+export const TOGGLE_FOLLOW_MUTATION = gql`
   mutation ToggleFollow($id_user: Float!) {
     toggleFollow(id_user: $id_user) {
       following
@@ -206,6 +255,10 @@ export const TOGGLE_FOLLOW_MUTATION = /* GraphQL */ `
   }
 `;
 
+/* ================================================= */
+/* COMMENTS MUTATIONS
+/* ================================================= */
+
 export const CREATE_COMMENT_MUTATION = gql`
   mutation CreateComment($input: CreateCommentInput!) {
     createComment(input: $input) {
@@ -213,40 +266,7 @@ export const CREATE_COMMENT_MUTATION = gql`
       texto
       fecha
       id_comentario_padre
-      usuario {
-        id_usuario
-        nombre_usuario
-        avatar
-      }
-    }
-  }
-`;
 
-export const POST_COMMENTS_QUERY = gql`
-  query PostComments($postId: Float!) {
-    getComment(postId: $postId) {
-      id_comentario
-      texto
-      Fecha
-      id_comentario_padre
-
-      Usuario {
-        id_usuario
-        nombre_usuario
-        avatar
-      }
-    }
-  }
-`;
-
-export const NEW_COMMENT_SUBSCRIPTION = gql`
-  subscription NewComment {
-    newComment {
-      id_comentario
-      id_post
-      texto
-      fecha
-      id_comentario_padre
       usuario {
         id_usuario
         nombre_usuario
@@ -280,8 +300,43 @@ export const DELETE_COMMENT_MUTATION = gql`
   }
 `;
 
+export const ADD_COMMENT_REACTION_MUTATION = gql`
+  mutation AddReactions($input: AddReactions!) {
+    addReactions(input: $input) {
+      id_reaction
+      id_comment
+      id_usuario
+      like
+      share
+      commented
+    }
+  }
+`;
+
+/* ================================================= */
+/* COMMENTS SUBSCRIPTIONS
+/* ================================================= */
+
+export const NEW_COMMENT_SUBSCRIPTION = gql`
+  subscription NewComment {
+    newComment {
+      id_comentario
+      id_post
+      texto
+      fecha
+      id_comentario_padre
+
+      usuario {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+    }
+  }
+`;
+
 export const UPDATED_COMMENT_SUBSCRIPTION = gql`
-  subscription {
+  subscription UpdatedComment {
     updatedComment {
       id_comentario
       texto
@@ -297,22 +352,9 @@ export const UPDATED_COMMENT_SUBSCRIPTION = gql`
 `;
 
 export const DELETED_COMMENT_SUBSCRIPTION = gql`
-  subscription {
+  subscription DeletedComment {
     deletedComment {
       id_comentario
-    }
-  }
-`;
-
-export const ADD_COMMENT_REACTION_MUTATION = gql`
-  mutation AddReactions($input: AddReactions!) {
-    addReactions(input: $input) {
-      id_reaction
-      id_comment
-      id_usuario
-      like
-      share
-      commented
     }
   }
 `;
@@ -330,7 +372,11 @@ export const COMMENT_REACTION_SUBSCRIPTION = gql`
   }
 `;
 
-export const UPDATE_USER_MUTATION = `
+/* ================================================= */
+/* USER MUTATIONS
+/* ================================================= */
+
+export const UPDATE_USER_MUTATION = gql`
   mutation UpdateUser($input: UpdateUser!) {
     updateUser(input: $input) {
       id_usuario
@@ -343,13 +389,139 @@ export const UPDATE_USER_MUTATION = `
 `;
 
 export const UPDATED_USER_SUBSCRIPTION = gql`
-  subscription {
+  subscription UpdatedUser {
     updatedUser {
       id_usuario
       nombre_usuario
       email
       descripcion
       avatar
+    }
+  }
+`;
+
+/* ================================================= */
+/* CHAT
+/* ================================================= */
+
+export const GET_MESSAGES_QUERY = gql`
+  query GetMessages($input: SearchMessageDto!) {
+    getMessages(input: $input) {
+      id_mensaje
+      texto
+      fecha
+      editado
+      leido
+
+      id_usuario_envia
+      id_usuario_recibe
+
+      envia {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+
+      recibe {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+    }
+  }
+`;
+
+export const CREATE_MESSAGE_MUTATION = gql`
+  mutation CreateMessage($input: CreateMessage!) {
+    createMessage(input: $input) {
+      id_mensaje
+      texto
+      fecha
+      editado
+      leido
+
+      id_usuario_envia
+      id_usuario_recibe
+
+      envia {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+
+      recibe {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+    }
+  }
+`;
+
+export const DELETE_MESSAGE_MUTATION = gql`
+  mutation RemoveMessage($input: DeleteMessage!) {
+    removeMessage(input: $input) {
+      id_mensaje
+    }
+  }
+`;
+
+export const UPDATE_MESSAGE_MUTATION = gql`
+  mutation UpdateMessage($input: UpdateMessage!) {
+    updateMessage(input: $input) {
+      id_mensaje
+      texto
+      editado
+    }
+  }
+`;
+
+/* ================================================= */
+/* CHAT SUBSCRIPTIONS
+/* ================================================= */
+
+export const NEW_MESSAGE_SUBSCRIPTION = gql`
+  subscription NewMessage {
+    newMessage {
+      id_mensaje
+      texto
+      fecha
+      editado
+      leido
+
+      id_usuario_envia
+      id_usuario_recibe
+
+      envia {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+
+      recibe {
+        id_usuario
+        nombre_usuario
+        avatar
+      }
+    }
+  }
+`;
+
+export const UPDATE_MESSAGE_SUBSCRIPTION = gql`
+  subscription UpdatedMessage {
+    updatedMessage {
+      id_mensaje
+      texto
+      editado
+      fecha
+    }
+  }
+`;
+
+export const DELETE_MESSAGE_SUBSCRIPTION = gql`
+  subscription DeleteMessage {
+    deleteMessage {
+      id_mensaje
     }
   }
 `;

@@ -21,23 +21,86 @@ import ReactionButtons from "./ReactionButtons";
 import UserInfoPanel from "./UserInfoPanel";
 import { buildTree, isVideo } from "./utils";
 
+/* =========================
+   MEDIA CAROUSEL
+========================= */
+function MediaCarousel({ files }: { files: any[] }) {
+  const [index, setIndex] = useState(0);
+
+  const file = files[index];
+  if (!file) return null;
+
+  const src = fileUrl(file.dir);
+
+  const video = isVideo(file.file_extension || "");
+
+  return (
+    <div className="w-full">
+      {video ? (
+        <video src={src} controls className="rounded-xl w-full object-cover" />
+      ) : (
+        <img
+          src={src}
+          className="rounded-xl w-full object-cover"
+          alt="post media"
+        />
+      )}
+
+      {/* CONTROLES SOLO SI HAY MÁS DE 1 */}
+      {files.length > 1 && (
+        <div className="flex justify-between items-center mt-2 text-sm">
+          <button
+            onClick={() => setIndex((i) => Math.max(i - 1, 0))}
+            disabled={index === 0}
+            className="px-2 py-1 border rounded disabled:opacity-50"
+          >
+            ◀
+          </button>
+
+          <span>
+            {index + 1} / {files.length}
+          </span>
+
+          <button
+            onClick={() => setIndex((i) => Math.min(i + 1, files.length - 1))}
+            disabled={index === files.length - 1}
+            className="px-2 py-1 border rounded disabled:opacity-50"
+          >
+            ▶
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================
+   MAIN COMPONENT
+========================= */
 export default function PostCard({ post }: { post: Post }) {
   const [me, setMe] = useState<any>(null);
   const [comments, setComments] = useState<PostComment[]>(
     post.comentarios ?? [],
   );
+
   const [replyText, setReplyText] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const [text, setText] = useState("");
   const [showComments, setShowComments] = useState(false);
+
   const [likes, setLikes] = useState(post.stats?.likes || 0);
   const [favorites, setFavorites] = useState(post.stats?.favorites || 0);
   const [shares, setShares] = useState(post.stats?.shares || 0);
+
   const [liked, setLiked] = useState(false);
   const [favorited, setFavorited] = useState(false);
   const [shared, setShared] = useState(false);
+
   const [commentReactionSent, setCommentReactionSent] = useState(false);
 
+  /* =========================
+     USER
+  ========================= */
   useEffect(() => {
     async function loadMe() {
       try {
@@ -57,6 +120,9 @@ export default function PostCard({ post }: { post: Post }) {
     loadMe();
   }, []);
 
+  /* =========================
+     SUBSCRIPTIONS
+  ========================= */
   useSubscription<{ newComment: any }>(NEW_COMMENT_SUBSCRIPTION, {
     onData: ({ data }) => {
       const comment = data.data?.newComment;
@@ -86,10 +152,7 @@ export default function PostCard({ post }: { post: Post }) {
       setComments((prev) =>
         prev.map((c) =>
           Number(c.id_comentario) === Number(updated.id_comentario)
-            ? {
-                ...c,
-                ...updated,
-              }
+            ? { ...c, ...updated }
             : c,
         ),
       );
@@ -112,6 +175,9 @@ export default function PostCard({ post }: { post: Post }) {
 
   const tree = useMemo(() => buildTree(comments), [comments]);
 
+  /* =========================
+     REACTIONS
+  ========================= */
   async function react(
     type: "like" | "favorites" | "shares" | "comentario",
     value: boolean,
@@ -155,10 +221,7 @@ export default function PostCard({ post }: { post: Post }) {
   }
 
   async function markCommentReaction() {
-    if (commentReactionSent) {
-      return;
-    }
-
+    if (commentReactionSent) return;
     await react("comentario", true);
     setCommentReactionSent(true);
   }
@@ -218,9 +281,7 @@ export default function PostCard({ post }: { post: Post }) {
     const content = text.trim();
     if (!content) return;
 
-    const response = await apolloClient.mutate<{
-      updateComment: any;
-    }>({
+    const response = await apolloClient.mutate({
       mutation: UPDATE_COMMENT_MUTATION,
       variables: {
         input: {
@@ -230,39 +291,30 @@ export default function PostCard({ post }: { post: Post }) {
       },
     });
 
-    const updated = response.data?.updateComment;
+    const payload = response.data as { updateComment?: any };
 
-    if (updated) {
-      setComments((prev) =>
-        prev.map((c) =>
-          Number(c.id_comentario) === Number(updated.id_comentario)
-            ? {
-                ...c,
-                ...updated,
-              }
-            : c,
-        ),
-      );
-    }
+    const updated = payload?.updateComment;
+    if (!updated) return;
+
+    setComments((prev) =>
+      prev.map((c) =>
+        Number(c.id_comentario) === Number(updated.id_comentario)
+          ? { ...c, ...updated }
+          : c,
+      ),
+    );
   }
 
+  /* =========================
+     RENDER
+  ========================= */
   return (
     <article className="rounded-[var(--radius)] bg-linear-to-br from-[var(--surface-grad-a)] to-[var(--surface-grad-b)] p-4 mb-6 border-2 border-[var(--accent)] w-[80vw] md:w-[60vw]">
       <div className="flex gap-4">
-        {post.files?.length > 0 && (
+        {/* 🔥 CARRUSEL REAL AQUÍ */}
+        {Array.isArray(post.files) && post.files.length > 0 && (
           <div className="w-1/2">
-            {isVideo(post.files[0].file_extension) ? (
-              <video
-                src={fileUrl(post.files[0].dir) || ""}
-                controls
-                className="rounded-xl"
-              />
-            ) : (
-              <img
-                src={fileUrl(post.files[0].dir) || ""}
-                className="rounded-xl"
-              />
-            )}
+            <MediaCarousel files={post.files} />
           </div>
         )}
 
@@ -270,6 +322,7 @@ export default function PostCard({ post }: { post: Post }) {
           <UserInfoPanel user={post.usuario} />
           <h3 className="text-xl font-bold">{post.title}</h3>
           <p>{post.description}</p>
+
           <ReactionButtons
             likes={likes}
             favorites={favorites}
@@ -293,9 +346,7 @@ export default function PostCard({ post }: { post: Post }) {
             onChange={setText}
             onSubmit={() => sendComment(null, text)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                sendComment(null, text);
-              }
+              if (e.key === "Enter") sendComment(null, text);
             }}
           />
 

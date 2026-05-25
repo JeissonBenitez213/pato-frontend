@@ -72,3 +72,26 @@ export interface Dato {
   nombre: string;
   descripcion?: string | null;
 }
+
+export type Message = {
+  id_mensaje: number;
+  texto: string;
+  fecha: string;
+  editado: boolean;
+  leido: boolean;
+
+  id_usuario_envia: number;
+  id_usuario_recibe: number;
+
+  envia: {
+    id_usuario: number;
+    nombre_usuario: string;
+    avatar?: string | null;
+  };
+
+  recibe: {
+    id_usuario: number;
+    nombre_usuario: string;
+    avatar?: string | null;
+  };
+};
