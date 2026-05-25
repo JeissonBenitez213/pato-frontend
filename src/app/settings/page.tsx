@@ -54,6 +54,18 @@ export default function SettingsPage() {
 
   const [avatarPreview, setAvatarPreview] = useState("");
 
+  /* ---------------- PASSWORD ---------------- */
+
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  const [passwordForm, setPasswordForm] = useState({
+    contraseña: "",
+    new_password: "",
+    refresh_password: "",
+  });
+
   /* ---------------- INIT ---------------- */
 
   useEffect(() => {
@@ -141,7 +153,6 @@ export default function SettingsPage() {
 
       let avatarPath: string | undefined;
 
-      // subir avatar primero
       if (avatarFile) {
         const uploaded = await api.uploadFiles([avatarFile]);
 
@@ -175,6 +186,42 @@ export default function SettingsPage() {
       alert("Error actualizando perfil");
     } finally {
       setLoading(false);
+    }
+  }
+
+  /* ---------------- CHANGE PASSWORD ---------------- */
+
+  async function onChangePassword() {
+    try {
+      setPasswordLoading(true);
+
+      if (passwordForm.new_password !== passwordForm.refresh_password) {
+        alert("Las nuevas contraseñas no coinciden");
+
+        return;
+      }
+
+      await api.changePassword(
+        passwordForm.contraseña,
+        passwordForm.new_password,
+        passwordForm.refresh_password,
+      );
+
+      setPasswordForm({
+        contraseña: "",
+        new_password: "",
+        refresh_password: "",
+      });
+
+      setShowPasswordForm(false);
+
+      alert("Contraseña actualizada");
+    } catch (error) {
+      console.error(error);
+
+      alert("Error cambiando contraseña");
+    } finally {
+      setPasswordLoading(false);
     }
   }
 
@@ -322,6 +369,113 @@ export default function SettingsPage() {
         >
           {loading ? "Guardando..." : "Guardar cambios"}
         </button>
+
+        {/* CHANGE PASSWORD */}
+
+        <button
+          onClick={() => setShowPasswordForm((prev) => !prev)}
+          style={{
+            padding: "14px 22px",
+            borderRadius: 999,
+            border: "1px solid var(--border)",
+            background: "var(--surface)",
+            color: "var(--text)",
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          {showPasswordForm
+            ? "Cancelar cambio de contraseña"
+            : "Cambiar contraseña"}
+        </button>
+
+        {showPasswordForm && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              padding: 18,
+              borderRadius: 18,
+              border: "1px solid var(--border)",
+              background: "var(--surface)",
+            }}
+          >
+            <input
+              type="password"
+              placeholder="Contraseña actual"
+              value={passwordForm.contraseña}
+              onChange={(e) =>
+                setPasswordForm((prev) => ({
+                  ...prev,
+                  contraseña: e.target.value,
+                }))
+              }
+              style={{
+                padding: 14,
+                borderRadius: 14,
+                border: "1px solid var(--border)",
+                background: "var(--bg)",
+                color: "var(--text)",
+              }}
+            />
+
+            <input
+              type="password"
+              placeholder="Nueva contraseña"
+              value={passwordForm.new_password}
+              onChange={(e) =>
+                setPasswordForm((prev) => ({
+                  ...prev,
+                  new_password: e.target.value,
+                }))
+              }
+              style={{
+                padding: 14,
+                borderRadius: 14,
+                border: "1px solid var(--border)",
+                background: "var(--bg)",
+                color: "var(--text)",
+              }}
+            />
+
+            <input
+              type="password"
+              placeholder="Repetir nueva contraseña"
+              value={passwordForm.refresh_password}
+              onChange={(e) =>
+                setPasswordForm((prev) => ({
+                  ...prev,
+                  refresh_password: e.target.value,
+                }))
+              }
+              style={{
+                padding: 14,
+                borderRadius: 14,
+                border: "1px solid var(--border)",
+                background: "var(--bg)",
+                color: "var(--text)",
+              }}
+            />
+
+            <button
+              disabled={passwordLoading}
+              onClick={onChangePassword}
+              style={{
+                padding: "14px 22px",
+                borderRadius: 999,
+                border: "none",
+                background: "var(--accent)",
+                color: "white",
+                fontWeight: 700,
+                cursor: "pointer",
+                opacity: passwordLoading ? 0.6 : 1,
+              }}
+            >
+              {passwordLoading ? "Actualizando..." : "Actualizar contraseña"}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* PET */}

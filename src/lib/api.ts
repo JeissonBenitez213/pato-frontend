@@ -213,24 +213,18 @@ export const api = {
       }),
     }),
 
-  registerAuth: (username: string, provider: string, provider_id: string) =>
-    rest("/auth/registerAuth", {
-      method: "POST",
-
+  changePassword: (
+    contraseña: string,
+    new_password: string,
+    refresh_password: string,
+  ) =>
+    rest<{ ok: boolean; message?: string }>("/auth/changePassword", {
+      method: "PUT",
+      credentials: "include",
       body: JSON.stringify({
-        username,
-        provider,
-        provider_id,
-      }),
-    }),
-
-  oAuthLogin: (provider: string, provider_id: string) =>
-    rest<{ ok: boolean }>("/auth/oAuthLogin", {
-      method: "POST",
-
-      body: JSON.stringify({
-        provider,
-        provider_id,
+        contraseña,
+        new_password,
+        refresh_password,
       }),
     }),
 
